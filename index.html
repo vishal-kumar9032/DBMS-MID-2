@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DBMS Quiz App</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #6e8efb 0%, #a777e3 100%);
+      padding: 20px;
+      min-height: 100vh;
+    }
+    .quiz-container {
+      max-width: 800px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    h1 {
+      text-align: center;
+      color: #4a4a8a;
+      font-size: 2.5em;
+      margin-bottom: 30px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #34495e;
+      margin-top: 30px;
+      padding-bottom: 15px;
+      border-bottom: 3px solid #eee;
+    }
+    .question {
+      display: none;
+      margin-bottom: 30px;
+      padding: 20px;
+      border-radius: 10px;
+      background: #f8f9fa;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .question.active {
+      display: block;
+      animation: fadeIn 0.5s ease-in;
+    }
+    .question h3 {
+      color: #2c3e50;
+      font-size: 1.2em;
+      margin-bottom: 20px;
+    }
+    .options label {
+      display: block;
+      padding: 12px 20px;
+      margin-bottom: 10px;
+      background: #f8faff;
+      border: 2px solid #e1e5f1;
+      border-radius: 8px;
+      color: #4a4a8a;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .options label:hover {
+      background: #f0f4ff;
+      border-color: #6e8efb;
+      transform: translateX(5px);
+    }
+    .options input[type="radio"] {
+      margin-right: 10px;
+    }
+    .nav-btn {
+      padding: 12px 25px;
+      font-size: 1em;
+      color: white;
+      background: #6e8efb;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(110,142,251,0.3);
+      transition: all 0.3s ease;
+    }
+    .nav-btn:hover {
+      background: #4a6ef5;
+      transform: translateY(-2px);
+    }
+    .nav-btn:disabled {
+      background: #c4cee8;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .question-number {
+      text-align: center;
+      margin-bottom: 15px;
+      color: #7f8c8d;
+      font-size: 0.9em;
+      font-weight: 600;
+    }
+    .options label.correct-answer {
+      background-color: #a8f0c6;
+      border-color: #7cdb9a;
+      color: #1e7c45;
+      font-weight: bold;
+    }
+    .options label.wrong-answer {
+      background-color: #ffd1d1;
+      border-color: #ffb2b2;
+      color: #c62828;
+    }
+    .answer-feedback {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 5px;
+      font-weight: 500;
+    }
+    .answer-feedback.correct {
+      background-color: #a8f0c6;
+      color: #1e7c45;
+      box-shadow: 0 2px 10px rgba(124,219,154,0.2);
+    }
+    .answer-feedback.incorrect {
+      background-color: #ffd1d1;
+      color: #c62828;
+      box-shadow: 0 2px 10px rgba(255,178,178,0.2);
+    }
+    #result {
+      text-align: center;
+      font-weight: bold;
+      font-size: 1.2em;
+      padding: 20px;
+      margin-top: 20px;
+      background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive Design */
+    @media screen and (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+      .quiz-container {
+        width: 95%;
+        padding: 15px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+      h2 {
+        font-size: 1.4em;
+      }
+      .question h3 {
+        font-size: 1.1em;
+      }
+      .options label {
+        padding: 10px 15px;
+        margin-bottom: 8px;
+        font-size: 0.95em;
+      }
+      .navigation {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .nav-btn {
+        width: 100%;
+        padding: 12px 0;
+      }
+      #result {
+        font-size: 1em;
+        padding: 15px;
+      }
+      .answer-feedback {
+        font-size: 0.9em;
+        padding: 8px;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      h1 {
+        font-size: 1.5em;
+      }
+      .question {
+        padding: 15px 10px;
+      }
+      .options input[type="radio"] {
+        transform: scale(0.9);
+      }
+      .question-number {
+        font-size: 0.8em;
+      }
+    }
+
+    /* Touch Device Optimizations */
+    @media (hover: none) {
+      .options label:hover {
+        transform: none;
+      }
+      .nav-btn:hover {
+        transform: none;
+      }
+      .options label {
+        padding: 15px 20px; /* Larger touch targets */
+      }
+      input[type="radio"] {
+        width: 20px;
+        height: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <h1>DBMS MID-2</h1>
+    <form id="quizForm">
+      <div id="quiz"></div>
+      <button type="submit">Submit</button>
+    </form>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        question: "If the decomposition is unable to represent all the attributes of the relation, then such a decomposition is called as?",
+        options: ["Insecure decomposition", "Lossy decomposition", "Lossless decomposition", "Secure decomposition"],
+        answer: 1
+      },
+      {
+        question: "If a functional dependency is reflexive, B is a subset of A and A is the set of attributes, then",
+        options: ["AB→C holds", "B→A holds", "A→B holds", "A→C holds"],
+        answer: 2
+      },
+      {
+        question: "Transaction _______ ensures that the transaction is being executed successfully.",
+        options: ["concurrency", "consistency", "serializability", "non-serializability"],
+        answer: 1
+      },
+      {
+        question: "In two-phase locking protocol, a transaction obtains locks in ______ phase.",
+        options: ["shrinking phase", "growing phase", "running phase", "initial phase"],
+        answer: 1
+      },
+      {
+        question: "In two-phase commit, _______ coordinates the synchronization of the commit or rollback operations.",
+        options: ["database manager", "central coordinator", "participants", "concurrency control manager"],
+        answer: 1
+      },
+      {
+        question: "______ protocol guarantees that a set of transactions becomes serializable.",
+        options: ["two-phase commit", "two-phase locking", "transaction locking", "checkpoints"],
+        answer: 1
+      },
+      {
+        question: "______ helps solve the concurrency problem.",
+        options: ["locking", "transaction monitor", "transaction serializability", "two-phase commit"],
+        answer: 0
+      },
+      {
+        question: "When the transaction finishes the final statement the transaction enters into",
+        options: ["Active state", "Committed state", "Partially committed state", "Abort state"],
+        answer: 2
+      },
+      {
+        question: "In order to maintain transactional integrity and database consistency, what technology does a DBMS deploy?",
+        options: ["Triggers", "Pointers", "Locks", "Cursors"],
+        answer: 2
+      },
+      {
+        question: "In a granularity hierarchy the highest level represents the",
+        options: ["Entire database", "Area", "File", "Record"],
+        answer: 0
+      },
+      {
+        question: "Which of the following has 'all-or-none' property?",
+        options: ["Atomicity", "Durability", "Isolation", "Consistency"],
+        answer: 0
+      },
+      {
+        question: "A transaction is delimited by statements (or function calls) of the form",
+        options: ["Begin transaction and end transaction", "Start transaction and stop transaction", "Get transaction and post transaction", "Read transaction and write transaction"],
+        answer: 0
+      },
+      {
+        question: "What is the main difference between ISAM and B+ tree indexes?",
+        options: ["ISAM allows dynamic growth, B+ tree does not", "ISAM uses hash tables, B+ tree uses binary trees", "B+ tree supports dynamic insertion/deletion, ISAM does not", "ISAM is used for non-indexed files only"],
+        answer: 2
+      },
+      {
+        question: "What is meant by hash indexing?",
+        options: ["Searching data using a tree", "Organizing records in sorted order", "Using a hash function to map data to locations", "Using binary search over indexes"],
+        answer: 2
+      },
+      {
+        question: "In B+ tree, the node which points to another node is called",
+        options: ["Leaf node", "External node", "Final node", "Internal node"],
+        answer: 3
+      },
+      {
+        question: "Fill in the blank: A relation is in 1NF if it contains only ____ values in each column.",
+        options: ["atomic", "composite", "multivalued", "normalized"],
+        answer: 0
+      },
+      {
+        question: "Fill in the blank: The four properties of transactions are Atomicity, Consistency, Isolation, and ____.",
+        options: ["Durability", "Reliability", "Security", "Integrity"],
+        answer: 0
+      },
+      {
+        question: "The physical location of a record determined by a formula that transforms a file key into a record location is",
+        options: ["Hashed file", "B-Tree file", "Indexed file", "Sequential file"],
+        answer: 0
+      },
+      {
+        question: "Which of the following indexing technique reduces the time required to access a single record, while preserving sequential access?",
+        options: ["Pile file", "Indexed Sequential file", "Heap file", "Linked list"],
+        answer: 1
+      },
+      {
+        question: "In B+ tree the values are stored at the",
+        options: ["Root node", "Internal node", "Leaf node", "Index node"],
+        answer: 2
+      },
+      {
+        question: "In a dense index, an index entry appears for",
+        options: ["Only selected search key values", "Every search key value", "The root node only", "Only for clustered records"],
+        answer: 1
+      },
+      {
+        question: "Indexed Sequential Access Method (ISAM) is used to",
+        options: ["Avoid indexing", "Provide sequential and direct access", "Optimize random access only", "Sort files in descending order"],
+        answer: 1
+      },
+      {
+        question: "Which of the following data structures is commonly used in database indexing?",
+        options: ["Stack", "Queue", "B+ Tree", "Array"],
+        answer: 2
+      },
+      {
+        question: "Extendable hashing uses a directory of buckets and supports",
+        options: ["Static resizing", "Dynamic growth and shrinkage", "Only deletion", "Fixed file size"],
+        answer: 1
+      }
+    ];
+
+    const fillInQuestions = [
+      {
+        question: "A __________ occurs when the same piece of data is stored in multiple places unnecessarily.",
+        options: ["data redundancy", "data inconsistency", "data anomaly", "data dependency"],
+        answer: 0
+      },
+      {
+        question: "A functional dependency X → Y means that Y is __________ determined by X.",
+        options: ["functionally", "partially", "transitively", "uniquely"],
+        answer: 0
+      },
+      {
+        question: "A relation is in 1NF if it contains only __________ values in each column.",
+        options: ["atomic", "composite", "multivalued", "normalized"],
+        answer: 0
+      },
+      {
+        question: "A relation is in 2NF if it is in 1NF and there is no __________ dependency.",
+        options: ["partial", "transitive", "functional", "multi-valued"],
+        answer: 0
+      },
+      {
+        question: "A relation is in 3NF if it is in 2NF and there is no __________ dependency.",
+        options: ["transitive", "partial", "functional", "multi-valued"],
+        answer: 0
+      },
+      {
+        question: "The four properties of transactions are Atomicity, Consistency, Isolation, and __________.",
+        options: ["Durability", "Reliability", "Security", "Integrity"],
+        answer: 0
+      },
+      {
+        question: "A transaction is said to be in the __________ state when it starts execution.",
+        options: ["active", "committed", "aborted", "partially committed"],
+        answer: 0
+      },
+      {
+        question: "If a transaction fails, the database must be returned to its state before the transaction began. This property is called __________.",
+        options: ["rollback", "commit", "abort", "recovery"],
+        answer: 0
+      },
+      {
+        question: "Concurrent execution of transactions may lead to problems like lost updates and __________ reads.",
+        options: ["dirty", "phantom", "consistent", "serializable"],
+        answer: 0
+      },
+      {
+        question: "A schedule is said to be __________ if it produces the same result as some serial schedule.",
+        options: ["serializable", "consistent", "durable", "atomic"],
+        answer: 0
+      },
+      {
+        question: "In two-phase locking, all locks are acquired during the __________ phase.",
+        options: ["growing", "shrinking", "committed", "aborted"],
+        answer: 0
+      },
+      {
+        question: "The __________ protocol assigns a unique number to each transaction to ensure serializability.",
+        options: ["timestamp", "two-phase locking", "validation", "commit"],
+        answer: 0
+      },
+      {
+        question: "Validation-based protocols are also called __________-time validation methods.",
+        options: ["optimistic", "pessimistic", "serializable", "atomic"],
+        answer: 0
+      },
+      {
+        question: "In multiple granularity locking, locks are applied at various levels such as database, file, page, and __________.",
+        options: ["record", "block", "segment", "table"],
+        answer: 0
+      },
+      {
+        question: "Log-based recovery systems maintain a __________ of all database update activities.",
+        options: ["log", "record", "file", "block"],
+        answer: 0
+      },
+      {
+        question: "__________ organization refers to the way records are physically stored in files.",
+        options: ["file", "block", "page", "segment"],
+        answer: 0
+      },
+      {
+        question: "In a B+ Tree, all data records are stored at the __________ level of the tree.",
+        options: ["leaf", "root", "internal", "index"],
+        answer: 0
+      },
+      {
+        question: "ISAM stands for __________ Sequential Access Method.",
+        options: ["Indexed", "Integrated", "Internal", "Inverted"],
+        answer: 0
+      },
+      {
+        question: "In a __________ tree, all values are found only at the leaf level.",
+        options: ["B+", "binary", "AVL", "red-black"],
+        answer: 0
+      },
+      {
+        question: "In hashing, a __________ function is used to compute the address of a data item.",
+        options: ["hash", "mapping", "indexing", "searching"],
+        answer: 0
+      },
+      {
+        question: "A __________ index contains an entry for each search key value in the database.",
+        options: ["dense", "sparse", "clustered", "primary"],
+        answer: 0
+      },
+      {
+        question: "The process of storing related data entries together in the same block is called __________ indexing.",
+        options: ["clustered", "dense", "sparse", "primary"],
+        answer: 0
+      },
+      {
+        question: "In B+ Trees, internal nodes contain keys and __________ to child nodes.",
+        options: ["pointers", "values", "records", "indexes"],
+        answer: 0
+      },
+      {
+        question: "Extendable hashing uses a directory of __________ to store data records.",
+        options: ["buckets", "blocks", "pages", "segments"],
+        answer: 0
+      },
+      {
+        question: "In file systems, the smallest unit of data transfer between disk and memory is called a __________.",
+        options: ["block", "page", "segment", "sector"],
+        answer: 0
+      }
+    ];
+
+    const quizContainer = document.getElementById("quiz");
+    const resultContainer = document.getElementById("result");
+    const quizForm = document.getElementById("quizForm");
+
+    let mcScore = 0;
+    let fillScore = 0;
+    let currentQuestion = 0;
+    const totalQuestions = questions.length + fillInQuestions.length;
+
+    function loadQuiz() {
+      const part1 = document.createElement('div');
+      part1.innerHTML = '<h2>Quiz Questions</h2>';
+      quizContainer.appendChild(part1);
+      
+      // Load multiple choice questions
+      questions.forEach((q, i) => {
+        const questionDiv = document.createElement("div");
+        questionDiv.classList.add("question");
+        questionDiv.innerHTML = `
+          <div class="question-number">Question ${i + 1} of ${totalQuestions}</div>
+          <h3>${q.question}</h3>
+        `;
+
+        const optionsDiv = document.createElement("div");
+        optionsDiv.classList.add("options");
+
+        q.options.forEach((opt, j) => {
+          optionsDiv.innerHTML += `
+            <label>
+              <input type="radio" name="q${i}" value="${j}" onclick="checkAnswer(this, ${i}, 'mc')"> ${opt}
+            </label>
+          `;
+        });
+
+        questionDiv.appendChild(optionsDiv);
+        part1.appendChild(questionDiv);
+      });
+
+      // Load fill in the blank questions
+      fillInQuestions.forEach((q, i) => {
+        const questionDiv = document.createElement("div");
+        questionDiv.classList.add("question");
+        questionDiv.innerHTML = `
+          <div class="question-number">Question ${questions.length + i + 1} of ${totalQuestions}</div>
+          <h3>${q.question}</h3>
+        `;
+
+        const optionsDiv = document.createElement("div");
+        optionsDiv.classList.add("options");
+
+        q.options.forEach((opt, j) => {
+          optionsDiv.innerHTML += `
+            <label>
+              <input type="radio" name="fill${i}" value="${j}" onclick="checkAnswer(this, ${i}, 'fill')"> ${opt}
+            </label>
+          `;
+        });
+
+        questionDiv.appendChild(optionsDiv);
+        part1.appendChild(questionDiv);
+      });
+
+      // Add navigation buttons
+      const navDiv = document.createElement('div');
+      navDiv.classList.add('navigation');
+      navDiv.innerHTML = `
+        <button type="button" class="nav-btn" onclick="prevQuestion()" id="prevBtn">Previous</button>
+        <button type="button" class="nav-btn" onclick="nextQuestion()" id="nextBtn">Next</button>
+      `;
+      quizContainer.appendChild(navDiv);
+
+      // Show first question
+      showQuestion(0);
+    }
+
+    function showQuestion(index) {
+      document.querySelectorAll('.question').forEach(q => q.classList.remove('active'));
+      document.querySelectorAll('.question')[index].classList.add('active');
+      currentQuestion = index;
+      
+      // Update navigation buttons
+      document.getElementById('prevBtn').disabled = currentQuestion === 0;
+      document.getElementById('nextBtn').disabled = currentQuestion === totalQuestions - 1;
+      document.getElementById('nextBtn').textContent = currentQuestion === totalQuestions - 1 ? 'Finish' : 'Next';
+    }
+
+    function nextQuestion() {
+      if (currentQuestion < totalQuestions - 1) {
+        showQuestion(currentQuestion + 1);
+      } else {
+        // Show submit button on last question
+        document.querySelector('button[type="submit"]').style.display = 'block';
+      }
+    }
+
+    function prevQuestion() {
+      if (currentQuestion > 0) {
+        showQuestion(currentQuestion - 1);
+      }
+    }
+
+    function checkAnswer(input, questionIndex, type) {
+      const questionDiv = input.closest('.question');
+      const userAns = parseInt(input.value);
+      const question = type === 'mc' ? questions[questionIndex] : fillInQuestions[questionIndex];
+      
+      // Disable all radio buttons for this question
+      questionDiv.querySelectorAll('input[type="radio"]').forEach(radio => {
+        radio.disabled = true;
+        const label = radio.closest('label');
+        if (parseInt(radio.value) === question.answer) {
+          label.classList.add('correct-answer');
+        } else if (radio === input) {
+          label.classList.add('wrong-answer');
+        }
+      });
+
+      if (userAns === question.answer) {
+        if(type === 'mc') mcScore++;
+        else fillScore++;
+        questionDiv.classList.add('correct');
+      } else {
+        questionDiv.classList.add('incorrect');
+      }
+
+      // Add feedback message
+      const answerFeedback = document.createElement('div');
+      answerFeedback.classList.add('answer-feedback');
+      
+      if (userAns === question.answer) {
+        answerFeedback.classList.add('correct');
+        answerFeedback.textContent = `Correct! ✓`;
+      } else {
+        answerFeedback.classList.add('incorrect');
+        answerFeedback.textContent = `Incorrect. The correct answer is shown in green.`;
+      }
+      
+      questionDiv.appendChild(answerFeedback);
+    }
+
+    quizForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const totalScore = mcScore + fillScore;
+      const totalQuestions = questions.length + fillInQuestions.length;
+      resultContainer.innerHTML = `
+        <h2>Final Score</h2>
+        <p>Multiple Choice: ${mcScore} out of ${questions.length}</p>
+        <p>Fill in the Blanks: ${fillScore} out of ${fillInQuestions.length}</p>
+        <p>Total Score: ${totalScore} out of ${totalQuestions}</p>
+        <p>Percentage: ${((totalScore/totalQuestions) * 100).toFixed(2)}%</p>
+      `;
+      
+      // Disable the submit button after showing final score
+      document.querySelector('button[type="submit"]').disabled = true;
+    });
+
+    // Hide submit button initially
+    document.querySelector('button[type="submit"]').style.display = 'none';
+
+    loadQuiz();
+  </script>
+</body>
+</html>
